@@ -12,8 +12,9 @@ backend/.env
 backend/data/
 
 # フロントエンド
-frontend/dist/
+backend/dist/
 frontend/node_modules/
+frontend/bun.lock
 
 # IDE
 .idea/
