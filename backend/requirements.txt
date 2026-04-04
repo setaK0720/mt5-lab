@@ -1,0 +1,11 @@
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.0
+python-dotenv>=1.0.0
+pandas>=2.0.0
+pandas-ta>=0.3.14b
+yfinance>=0.2.40
+plotly>=5.22.0
+pyarrow>=16.0.0
+fredapi>=0.5.2
+httpx>=0.27.0
+backtesting>=0.3.3
