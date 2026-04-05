@@ -10,6 +10,7 @@ import {
   listTicks,
 } from "../api";
 import { useSymbols } from "../hooks/useSymbols";
+import { SymbolSelect } from "./SymbolSelect";
 import type { BarRecord, DataFileInfo, TickRecord } from "../types";
 
 const MT5_INTERVALS = ["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1wk"];
@@ -107,9 +108,7 @@ function BarsTab() {
         <h3>バーデータ取得</h3>
         <div className="form-row">
           <label>シンボル</label>
-          <select value={symbol} onChange={(e) => setSymbol(e.target.value)}>
-            {symbols.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
+          <SymbolSelect value={symbol} onChange={setSymbol} symbols={symbols} />
         </div>
         <div className="form-row">
           <label>インターバル</label>
@@ -250,9 +249,7 @@ function TicksTab() {
         <h3>ティックデータ取得</h3>
         <div className="form-row">
           <label>シンボル</label>
-          <select value={symbol} onChange={(e) => setSymbol(e.target.value)}>
-            {symbols.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
+          <SymbolSelect value={symbol} onChange={setSymbol} symbols={symbols} />
         </div>
         <div className="form-row">
           <label>開始日</label>

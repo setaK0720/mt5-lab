@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Plot from "react-plotly.js";
 import { getIndicators } from "../api";
 import { useSymbols } from "../hooks/useSymbols";
+import { SymbolSelect } from "./SymbolSelect";
 import type { OhlcvRecord } from "../types";
 
 const ALL_INTERVALS = ["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1wk"];
@@ -91,9 +92,7 @@ export function ChartPanel({ defaultSymbol = "EURUSD", defaultInterval = "1h", d
   return (
     <div className="chart-panel">
       <div className="chart-controls">
-        <select value={symbol} onChange={(e) => setSymbol(e.target.value)}>
-          {symbols.map((s) => <option key={s} value={s}>{s}</option>)}
-        </select>
+        <SymbolSelect value={symbol} onChange={setSymbol} symbols={symbols} />
         <select value={period} onChange={(e) => setPeriod(e.target.value)}>
           {PERIODS.map((p) => <option key={p} value={p}>{p}</option>)}
         </select>

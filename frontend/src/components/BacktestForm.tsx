@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { listStrategies, startBacktest } from "../api";
 import { useSymbols } from "../hooks/useSymbols";
+import { SymbolSelect } from "./SymbolSelect";
 import type { StrategyInfo } from "../types";
 
 interface Props {
@@ -76,9 +77,7 @@ export function BacktestForm({ onJobStarted }: Props) {
       </div>
       <div className="form-row">
         <label>シンボル</label>
-        <select value={symbol} onChange={(e) => setSymbol(e.target.value)}>
-          {symbols.map((s) => <option key={s} value={s}>{s}</option>)}
-        </select>
+        <SymbolSelect value={symbol} onChange={setSymbol} symbols={symbols} />
       </div>
       <div className="form-row">
         <label>期間</label>
