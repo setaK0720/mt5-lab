@@ -80,7 +80,7 @@ def _fetch_from_mt5(symbol: str, interval: str, period: str):
     import pandas as pd
 
     try:
-        import metatrader5 as mt5
+        import MetaTrader5 as mt5
         from datetime import datetime, timedelta
 
         tf_attr = MT5_INTERVAL_MAP.get(interval, "TIMEFRAME_H1")

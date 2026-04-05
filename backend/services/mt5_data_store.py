@@ -36,7 +36,7 @@ def _parse_date(s: str) -> datetime:
 
 def fetch_and_save_bars(symbol: str, interval: str, date_from: str, date_to: str) -> str:
     """MT5 copy_rates_range でバーデータを取得し parquet 保存。file_id を返す。"""
-    import metatrader5 as mt5
+    import MetaTrader5 as mt5
 
     dt_from = _parse_date(date_from)
     dt_to   = _parse_date(date_to)
@@ -115,7 +115,7 @@ def delete_bars(file_id: str) -> None:
 
 def fetch_and_save_ticks(symbol: str, date_from: str, date_to: str) -> str:
     """MT5 copy_ticks_range でティックデータを取得し parquet 保存。file_id を返す。"""
-    import metatrader5 as mt5
+    import MetaTrader5 as mt5
 
     dt_from = _parse_date(date_from)
     dt_to   = _parse_date(date_to)
