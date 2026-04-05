@@ -91,6 +91,9 @@ def _fetch_from_mt5(symbol: str, interval: str, period: str):
             err = mt5.last_error()
             raise RuntimeError(f"MT5 initialize failed: {err}")
 
+        if not mt5.symbol_select(symbol, True):
+            raise RuntimeError(f"MT5: シンボル '{symbol}' をマーケットウォッチに追加できませんでした。(error={mt5.last_error()})")
+
         utc_to = datetime.utcnow()
         utc_from = utc_to - timedelta(days=days)
         rates = mt5.copy_rates_range(symbol, tf, utc_from, utc_to)

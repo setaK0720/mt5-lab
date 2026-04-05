@@ -1,6 +1,6 @@
 """MT5バー・ティックデータの取得・永続保存サービス"""
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -39,12 +39,15 @@ def fetch_and_save_bars(symbol: str, interval: str, date_from: str, date_to: str
     import MetaTrader5 as mt5
 
     dt_from = _parse_date(date_from)
-    dt_to   = _parse_date(date_to)
+    dt_to   = _parse_date(date_to) + timedelta(days=1)
 
     tf_attr = MT5_INTERVAL_MAP.get(interval, "TIMEFRAME_H1")
 
     if not mt5.initialize():
         raise RuntimeError(f"MT5 initialize failed: {mt5.last_error()}")
+
+    if not mt5.symbol_select(symbol, True):
+        raise RuntimeError(f"MT5: シンボル '{symbol}' をマーケットウォッチに追加できませんでした。(error={mt5.last_error()})")
 
     tf = getattr(mt5, tf_attr, mt5.TIMEFRAME_H1)
     rates = mt5.copy_rates_range(symbol, tf, dt_from, dt_to)
@@ -118,10 +121,13 @@ def fetch_and_save_ticks(symbol: str, date_from: str, date_to: str) -> str:
     import MetaTrader5 as mt5
 
     dt_from = _parse_date(date_from)
-    dt_to   = _parse_date(date_to)
+    dt_to   = _parse_date(date_to) + timedelta(days=1)
 
     if not mt5.initialize():
         raise RuntimeError(f"MT5 initialize failed: {mt5.last_error()}")
+
+    if not mt5.symbol_select(symbol, True):
+        raise RuntimeError(f"MT5: シンボル '{symbol}' をマーケットウォッチに追加できませんでした。(error={mt5.last_error()})")
 
     ticks = mt5.copy_ticks_range(symbol, dt_from, dt_to, mt5.COPY_TICKS_ALL)
 
