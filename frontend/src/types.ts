@@ -60,6 +60,38 @@ export interface BacktestJobStatus {
   error?: string;
 }
 
+// ---- Data Manager ----
+
+export interface DataFileInfo {
+  file_id: string;
+  symbol: string;
+  interval?: string;
+  date_from: string;
+  date_to: string;
+  rows: number | null;
+  size_bytes: number;
+}
+
+export interface BarRecord {
+  datetime: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+  spread?: number;
+  real_volume?: number;
+}
+
+export interface TickRecord {
+  datetime: string;
+  bid: number;
+  ask: number;
+  last?: number;
+  volume?: number;
+  [key: string]: unknown;
+}
+
 // ---- Research ----
 
 export interface FredObservation {

@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { AnalysisPage } from "./components/AnalysisPage";
+import { DataManagerPage } from "./components/DataManagerPage";
 import { ResearchPage } from "./components/ResearchPage";
 import { Sidebar } from "./components/Sidebar";
 
-type Page = "analysis" | "research";
+type Page = "analysis" | "research" | "data";
 
 export default function App() {
   const [page, setPage] = useState<Page>("analysis");
@@ -25,6 +26,7 @@ export default function App() {
       <div className="app-body">
         {page === "analysis" && <AnalysisPage />}
         {page === "research" && <ResearchPage />}
+        {page === "data"     && <DataManagerPage />}
       </div>
     </div>
   );

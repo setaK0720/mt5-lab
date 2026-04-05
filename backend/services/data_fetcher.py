@@ -1,4 +1,4 @@
-"""yfinance + MT5履歴を統合したOHLCVデータ取得層"""
+"""MT5履歴OHLCVデータ取得層"""
 import logging
 import time
 from pathlib import Path
@@ -25,7 +25,7 @@ def fetch_ohlcv(
     symbol: str,
     interval: str = "1h",
     period: str = "90d",
-    source: str = "yfinance",
+    source: str = "mt5",
 ):
     """OHLCVデータを取得する。pandas DataFrame を返す。"""
     try:
@@ -33,7 +33,7 @@ def fetch_ohlcv(
     except ImportError:
         raise RuntimeError(
             "pandas is not installed. "
-            "Stop the server and run: pip install pandas yfinance plotly pyarrow fredapi httpx"
+            "Stop the server and run: pip install pandas plotly pyarrow"
         )
 
     cache_path = _cache_path(symbol, interval, source)
@@ -45,10 +45,7 @@ def fetch_ohlcv(
         except Exception as e:
             logger.warning("Cache read failed: %s", e)
 
-    if source == "mt5":
-        df = _fetch_from_mt5(symbol, interval, period)
-    else:
-        df = _fetch_from_yfinance(symbol, interval, period)
+    df = _fetch_from_mt5(symbol, interval, period)
 
     if df is not None and not df.empty:
         try:
@@ -121,51 +118,7 @@ def _fetch_from_mt5(symbol: str, interval: str, period: str):
         raise RuntimeError(f"MT5データ取得エラー: {e}")
 
 
-# ── yfinance ───────────────────────────────────────────────
-
-def _adjust_interval_yfinance(interval: str, period: str) -> str:
-    """yfinance の取得上限に合わせて interval を自動調整する。"""
-    period_days = PERIOD_DAYS.get(period, 90)
-    adjusted = interval
-    if interval in ("1m",) and period_days > 7:
-        adjusted = "5m"
-    elif interval in ("2m", "5m", "15m", "30m") and period_days > 60:
-        adjusted = "1h"
-    elif interval in ("1h", "4h") and period_days > 730:
-        adjusted = "1d"
-    if adjusted != interval:
-        logger.warning("yfinance: interval '%s'→'%s'（period=%s）", interval, adjusted, period)
-    return adjusted
-
-
-def _fetch_from_yfinance(symbol: str, interval: str, period: str):
-    import pandas as pd
-    import yfinance as yf
-
-    yf_interval = _adjust_interval_yfinance(interval, period)
-    if yf_interval == "4h":
-        yf_interval = "1h"
-
-    try:
-        logger.info("yfinance: fetching %s %s %s", symbol, yf_interval, period)
-        ticker = yf.Ticker(symbol)
-        df = ticker.history(period=period, interval=yf_interval, timeout=30)
-        if df.empty:
-            logger.warning("yfinance: empty data for %s", symbol)
-            return pd.DataFrame()
-
-        df.index = df.index.tz_localize(None) if df.index.tzinfo is not None else df.index
-        df.columns = [c.lower() for c in df.columns]
-        df = df[["open", "high", "low", "close", "volume"]].copy()
-        df.index.name = "datetime"
-        logger.info("yfinance: got %d rows for %s", len(df), symbol)
-        return df
-    except Exception as e:
-        logger.error("yfinance fetch error: %s", e)
-        return pd.DataFrame()
-
-
-def invalidate_cache(symbol: str, interval: str, source: str = "yfinance") -> None:
+def invalidate_cache(symbol: str, interval: str, source: str = "mt5") -> None:
     cache_path = _cache_path(symbol, interval, source)
     if cache_path.exists():
         cache_path.unlink()

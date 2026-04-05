@@ -1,11 +1,14 @@
 import type {
   BacktestJobStatus,
+  BarRecord,
   CalendarEvent,
+  DataFileInfo,
   FredSeries,
   FredSeriesInfo,
   NewsArticle,
   OhlcvResponse,
   StrategyInfo,
+  TickRecord,
 } from "./types";
 
 const BASE = "/api";
@@ -24,10 +27,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 // Analysis
-export const getOhlcv = (symbol: string, interval: string, period: string, source = "yfinance") =>
+export const getOhlcv = (symbol: string, interval: string, period: string, source = "mt5") =>
   request<OhlcvResponse>(`/analysis/ohlcv?symbol=${encodeURIComponent(symbol)}&interval=${interval}&period=${period}&source=${source}`);
 
-export const getIndicators = (symbol: string, interval: string, period: string, source = "yfinance") =>
+export const getIndicators = (symbol: string, interval: string, period: string, source = "mt5") =>
   request<OhlcvResponse>(`/analysis/indicators?symbol=${encodeURIComponent(symbol)}&interval=${interval}&period=${period}&source=${source}`);
 
 export const listStrategies = () =>
@@ -46,6 +49,32 @@ export const startBacktest = (body: {
 
 export const getBacktestJob = (jobId: string) =>
   request<BacktestJobStatus>(`/analysis/backtest/${jobId}`);
+
+// Data Manager — Bars
+export const fetchBars = (body: { symbol: string; interval: string; date_from: string; date_to: string }) =>
+  request<{ file_id: string; status: string }>("/data/bars/fetch", { method: "POST", body: JSON.stringify(body) });
+
+export const listBars = () =>
+  request<DataFileInfo[]>("/data/bars");
+
+export const getBarsPreview = (file_id: string, limit = 500) =>
+  request<{ file_id: string; data: BarRecord[] }>(`/data/bars/${encodeURIComponent(file_id)}/preview?limit=${limit}`);
+
+export const deleteBars = (file_id: string) =>
+  request<undefined>(`/data/bars/${encodeURIComponent(file_id)}`, { method: "DELETE" });
+
+// Data Manager — Ticks
+export const fetchTicks = (body: { symbol: string; date_from: string; date_to: string }) =>
+  request<{ file_id: string; status: string }>("/data/ticks/fetch", { method: "POST", body: JSON.stringify(body) });
+
+export const listTicks = () =>
+  request<DataFileInfo[]>("/data/ticks");
+
+export const getTicksPreview = (file_id: string, limit = 1000) =>
+  request<{ file_id: string; data: TickRecord[] }>(`/data/ticks/${encodeURIComponent(file_id)}/preview?limit=${limit}`);
+
+export const deleteTicks = (file_id: string) =>
+  request<undefined>(`/data/ticks/${encodeURIComponent(file_id)}`, { method: "DELETE" });
 
 // Research
 export const listFredSeries = () =>

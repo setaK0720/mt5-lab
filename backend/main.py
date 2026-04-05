@@ -12,8 +12,9 @@ logging.basicConfig(level=logging.INFO)
 app = FastAPI(title="MT5 Lab")
 
 # APIルーター登録
-from routers import analysis, research
+from routers import analysis, data_manager, research
 app.include_router(analysis.router)
+app.include_router(data_manager.router)
 app.include_router(research.router)
 
 # 静的ファイル配信（本番用: bun run build でここに出力）

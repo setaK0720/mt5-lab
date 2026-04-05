@@ -71,10 +71,10 @@ def _to_records(df):
 
 @router.get("/ohlcv")
 async def get_ohlcv(
-    symbol: Annotated[str, Query(description="ティッカーシンボル")] = "EURUSD=X",
+    symbol: Annotated[str, Query(description="ティッカーシンボル")] = "EURUSD",
     interval: Annotated[str, Query()] = "1h",
     period: Annotated[str, Query()] = "30d",
-    source: Annotated[str, Query()] = "yfinance",
+    source: Annotated[str, Query()] = "mt5",
 ):
     """OHLCVデータを返す。"""
     df = _fetch_ohlcv(symbol, interval, period, source)
@@ -85,10 +85,10 @@ async def get_ohlcv(
 
 @router.get("/indicators")
 async def get_indicators(
-    symbol: Annotated[str, Query()] = "EURUSD=X",
+    symbol: Annotated[str, Query()] = "EURUSD",
     interval: Annotated[str, Query()] = "1h",
     period: Annotated[str, Query()] = "30d",
-    source: Annotated[str, Query()] = "yfinance",
+    source: Annotated[str, Query()] = "mt5",
 ):
     """OHLCVデータ + テクニカル指標を返す。"""
     df = _fetch_ohlcv(symbol, interval, period, source)
@@ -114,10 +114,10 @@ async def list_strategies():
 
 class BacktestRequest(BaseModel):
     strategy: str = "sma_cross"
-    symbol: str = "EURUSD=X"
+    symbol: str = "EURUSD"
     interval: str = "1h"
     period: str = "1y"
-    source: str = "yfinance"
+    source: str = "mt5"
     params: dict = {}
     init_cash: float = 10000.0
     fees: float = 0.0002

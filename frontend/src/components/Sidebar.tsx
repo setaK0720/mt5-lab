@@ -1,4 +1,4 @@
-type Page = "analysis" | "research";
+type Page = "analysis" | "research" | "data";
 
 interface SidebarProps {
   currentPage: Page;
@@ -9,7 +9,8 @@ interface SidebarProps {
 
 const MENU_ITEMS: { page: Page; label: string; icon: string }[] = [
   { page: "analysis", label: "分析・バックテスト", icon: "📈" },
-  { page: "research", label: "リサーチ", icon: "🔬" },
+  { page: "research", label: "リサーチ",           icon: "🔬" },
+  { page: "data",     label: "データ管理",          icon: "🗄️" },
 ];
 
 export function Sidebar({ currentPage, onNavigate, isOpen, onToggle }: SidebarProps) {

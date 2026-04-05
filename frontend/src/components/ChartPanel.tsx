@@ -4,24 +4,8 @@ import { getIndicators } from "../api";
 import type { OhlcvRecord } from "../types";
 
 const MT5_SYMBOLS  = ["EURUSD", "USDJPY", "GBPUSD", "AUDUSD", "USDCHF", "EURJPY", "GBPJPY"];
-const YF_SYMBOLS   = ["EURUSD=X", "USDJPY=X", "GBPUSD=X", "AUDUSD=X", "USDCHF=X"];
 const ALL_INTERVALS = ["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1wk"];
 const PERIODS = ["7d", "30d", "90d", "1y", "2y", "5y"];
-
-// yfinance のみ interval 制限あり
-const YF_INTERVAL_LIMITS: Record<string, string[]> = {
-  "7d":  ["1m", "5m", "15m", "30m", "1h", "1d"],
-  "30d": ["5m", "15m", "30m", "1h", "1d"],
-  "90d": ["15m", "30m", "1h", "1d"],
-  "1y":  ["1h", "1d", "1wk"],
-  "2y":  ["1h", "1d", "1wk"],
-  "5y":  ["1d", "1wk"],
-};
-
-function getAvailableIntervals(source: string, period: string): string[] {
-  if (source === "mt5") return ALL_INTERVALS;
-  return YF_INTERVAL_LIMITS[period] ?? ["1h", "1d"];
-}
 
 interface Props {
   defaultSymbol?: string;
@@ -29,8 +13,7 @@ interface Props {
   defaultPeriod?: string;
 }
 
-export function ChartPanel({ defaultSymbol = "EURUSD=X", defaultInterval = "1h", defaultPeriod = "30d" }: Props) {
-  const [source, setSource]     = useState("yfinance");
+export function ChartPanel({ defaultSymbol = "EURUSD", defaultInterval = "1h", defaultPeriod = "30d" }: Props) {
   const [symbol, setSymbol]     = useState(defaultSymbol);
   const [interval, setInterval] = useState(defaultInterval);
   const [period, setPeriod]     = useState(defaultPeriod);
@@ -38,32 +21,13 @@ export function ChartPanel({ defaultSymbol = "EURUSD=X", defaultInterval = "1h",
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState<string | null>(null);
 
-  // source 変更時にシンボル・interval をリセット
-  function handleSourceChange(s: string) {
-    setSource(s);
-    setSymbol(s === "mt5" ? MT5_SYMBOLS[0] : YF_SYMBOLS[0]);
-    const avail = getAvailableIntervals(s, period);
-    if (!avail.includes(interval)) setInterval(avail[0]);
-    setData([]);
-    setError(null);
-  }
-
-  // period 変更時に interval を制限に合わせる
-  function handlePeriodChange(p: string) {
-    setPeriod(p);
-    if (source === "yfinance") {
-      const avail = getAvailableIntervals("yfinance", p);
-      if (!avail.includes(interval)) setInterval(avail[0]);
-    }
-  }
-
-  useEffect(() => { load(); }, [symbol, interval, period, source]);
+  useEffect(() => { load(); }, [symbol, interval, period]);
 
   async function load() {
     setLoading(true);
     setError(null);
     try {
-      const res = await getIndicators(symbol, interval, period, source);
+      const res = await getIndicators(symbol, interval, period);
       setData(res.data);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "データ取得エラー");
@@ -71,9 +35,6 @@ export function ChartPanel({ defaultSymbol = "EURUSD=X", defaultInterval = "1h",
       setLoading(false);
     }
   }
-
-  const symbols = source === "mt5" ? MT5_SYMBOLS : YF_SYMBOLS;
-  const intervals = getAvailableIntervals(source, period);
 
   const dates  = data.map((d) => d.datetime);
   const candlestickTrace = {
@@ -129,26 +90,14 @@ export function ChartPanel({ defaultSymbol = "EURUSD=X", defaultInterval = "1h",
   return (
     <div className="chart-panel">
       <div className="chart-controls">
-        {/* ソース切り替え */}
-        <div className="source-toggle">
-          <button
-            className={`source-btn${source === "mt5" ? " source-active" : ""}`}
-            onClick={() => handleSourceChange("mt5")}
-          >MT5</button>
-          <button
-            className={`source-btn${source === "yfinance" ? " source-active" : ""}`}
-            onClick={() => handleSourceChange("yfinance")}
-          >yfinance</button>
-        </div>
-
         <select value={symbol} onChange={(e) => setSymbol(e.target.value)}>
-          {symbols.map((s) => <option key={s} value={s}>{s}</option>)}
+          {MT5_SYMBOLS.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
-        <select value={period} onChange={(e) => handlePeriodChange(e.target.value)}>
+        <select value={period} onChange={(e) => setPeriod(e.target.value)}>
           {PERIODS.map((p) => <option key={p} value={p}>{p}</option>)}
         </select>
         <select value={interval} onChange={(e) => setInterval(e.target.value)}>
-          {intervals.map((i) => <option key={i} value={i}>{i}</option>)}
+          {ALL_INTERVALS.map((i) => <option key={i} value={i}>{i}</option>)}
         </select>
         <button onClick={load} disabled={loading}>{loading ? "読込中..." : "更新"}</button>
       </div>
