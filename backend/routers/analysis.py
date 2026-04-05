@@ -77,7 +77,10 @@ async def get_ohlcv(
     source: Annotated[str, Query()] = "mt5",
 ):
     """OHLCVデータを返す。"""
-    df = _fetch_ohlcv(symbol, interval, period, source)
+    try:
+        df = _fetch_ohlcv(symbol, interval, period, source)
+    except RuntimeError as e:
+        raise HTTPException(status_code=502, detail=str(e))
     if df.empty:
         raise HTTPException(status_code=404, detail="Data not found")
     return {"symbol": symbol, "interval": interval, "data": _to_records(df)}
@@ -91,7 +94,10 @@ async def get_indicators(
     source: Annotated[str, Query()] = "mt5",
 ):
     """OHLCVデータ + テクニカル指標を返す。"""
-    df = _fetch_ohlcv(symbol, interval, period, source)
+    try:
+        df = _fetch_ohlcv(symbol, interval, period, source)
+    except RuntimeError as e:
+        raise HTTPException(status_code=502, detail=str(e))
     if df.empty:
         raise HTTPException(status_code=404, detail="Data not found")
     df = _calc_indicators(df)
@@ -132,7 +138,10 @@ async def start_backtest(req: BacktestRequest):
     if req.strategy not in strategies:
         raise HTTPException(status_code=400, detail=f"Unknown strategy: {req.strategy}")
 
-    df = _fetch_ohlcv(req.symbol, req.interval, req.period, req.source)
+    try:
+        df = _fetch_ohlcv(req.symbol, req.interval, req.period, req.source)
+    except RuntimeError as e:
+        raise HTTPException(status_code=502, detail=str(e))
     if df.empty:
         raise HTTPException(status_code=404, detail="Price data not found")
 
