@@ -9,9 +9,9 @@ import {
   listBars,
   listTicks,
 } from "../api";
+import { useSymbols } from "../hooks/useSymbols";
 import type { BarRecord, DataFileInfo, TickRecord } from "../types";
 
-const MT5_SYMBOLS  = ["EURUSD", "USDJPY", "GBPUSD", "AUDUSD", "USDCHF", "EURJPY", "GBPJPY"];
 const MT5_INTERVALS = ["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1wk"];
 
 type Tab = "bars" | "ticks";
@@ -47,6 +47,7 @@ export function DataManagerPage() {
 // ── バーデータタブ ────────────────────────────────────────────
 
 function BarsTab() {
+  const { symbols } = useSymbols();
   const [symbol,   setSymbol]   = useState("EURUSD");
   const [interval, setInterval] = useState("1h");
   const [dateFrom, setDateFrom] = useState("");
@@ -107,7 +108,7 @@ function BarsTab() {
         <div className="form-row">
           <label>シンボル</label>
           <select value={symbol} onChange={(e) => setSymbol(e.target.value)}>
-            {MT5_SYMBOLS.map((s) => <option key={s} value={s}>{s}</option>)}
+            {symbols.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
         <div className="form-row">
@@ -190,6 +191,7 @@ function BarsTab() {
 // ── ティックデータタブ ────────────────────────────────────────
 
 function TicksTab() {
+  const { symbols } = useSymbols();
   const [symbol,  setSymbol]  = useState("EURUSD");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo,   setDateTo]   = useState("");
@@ -249,7 +251,7 @@ function TicksTab() {
         <div className="form-row">
           <label>シンボル</label>
           <select value={symbol} onChange={(e) => setSymbol(e.target.value)}>
-            {MT5_SYMBOLS.map((s) => <option key={s} value={s}>{s}</option>)}
+            {symbols.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
         <div className="form-row">

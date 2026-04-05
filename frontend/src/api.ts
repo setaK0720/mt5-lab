@@ -50,6 +50,10 @@ export const startBacktest = (body: {
 export const getBacktestJob = (jobId: string) =>
   request<BacktestJobStatus>(`/analysis/backtest/${jobId}`);
 
+// Data Manager — Symbols
+export const listSymbols = () =>
+  request<string[]>("/data/symbols");
+
 // Data Manager — Bars
 export const fetchBars = (body: { symbol: string; interval: string; date_from: string; date_to: string }) =>
   request<{ file_id: string; status: string }>("/data/bars/fetch", { method: "POST", body: JSON.stringify(body) });

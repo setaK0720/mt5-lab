@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import Plot from "react-plotly.js";
 import { getIndicators } from "../api";
+import { useSymbols } from "../hooks/useSymbols";
 import type { OhlcvRecord } from "../types";
 
-const MT5_SYMBOLS  = ["EURUSD", "USDJPY", "GBPUSD", "AUDUSD", "USDCHF", "EURJPY", "GBPJPY"];
 const ALL_INTERVALS = ["1m", "5m", "15m", "30m", "1h", "4h", "1d", "1wk"];
 const PERIODS = ["7d", "30d", "90d", "1y", "2y", "5y"];
 
@@ -14,6 +14,7 @@ interface Props {
 }
 
 export function ChartPanel({ defaultSymbol = "EURUSD", defaultInterval = "1h", defaultPeriod = "30d" }: Props) {
+  const { symbols } = useSymbols();
   const [symbol, setSymbol]     = useState(defaultSymbol);
   const [interval, setInterval] = useState(defaultInterval);
   const [period, setPeriod]     = useState(defaultPeriod);
@@ -91,7 +92,7 @@ export function ChartPanel({ defaultSymbol = "EURUSD", defaultInterval = "1h", d
     <div className="chart-panel">
       <div className="chart-controls">
         <select value={symbol} onChange={(e) => setSymbol(e.target.value)}>
-          {MT5_SYMBOLS.map((s) => <option key={s} value={s}>{s}</option>)}
+          {symbols.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
         <select value={period} onChange={(e) => setPeriod(e.target.value)}>
           {PERIODS.map((p) => <option key={p} value={p}>{p}</option>)}

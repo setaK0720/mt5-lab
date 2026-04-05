@@ -21,6 +21,23 @@ class FetchTicksRequest(BaseModel):
     date_to: str    # YYYY-MM-DD
 
 
+# ── シンボル一覧 ─────────────────────────────────────────────
+
+@router.get("/symbols")
+async def list_symbols():
+    """MT5ログイン口座で取引可能なシンボル一覧を返す。"""
+    try:
+        import metatrader5 as mt5
+        if not mt5.initialize():
+            raise RuntimeError(f"MT5 initialize failed: {mt5.last_error()}")
+        symbols = mt5.symbols_get()
+        if symbols is None:
+            raise RuntimeError(f"MT5 symbols_get failed: {mt5.last_error()}")
+        return sorted([s.name for s in symbols])
+    except RuntimeError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+
 # ── バーデータ ───────────────────────────────────────────────
 
 @router.post("/bars/fetch")

@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { listStrategies, startBacktest } from "../api";
+import { useSymbols } from "../hooks/useSymbols";
 import type { StrategyInfo } from "../types";
 
 interface Props {
   onJobStarted: (jobId: string) => void;
 }
-
-const MT5_SYMBOLS = ["EURUSD", "USDJPY", "GBPUSD", "AUDUSD", "USDCHF", "EURJPY", "GBPJPY"];
 const PERIODS     = ["90d", "1y", "2y", "5y"];
 const MT5_INTERVALS = [
   { value: "15m", label: "15分" },
@@ -18,6 +17,7 @@ const MT5_INTERVALS = [
 ];
 
 export function BacktestForm({ onJobStarted }: Props) {
+  const { symbols } = useSymbols();
   const [strategies, setStrategies] = useState<StrategyInfo[]>([]);
   const [strategy, setStrategy]     = useState("sma_cross");
   const [symbol, setSymbol]         = useState("EURUSD");
@@ -62,6 +62,7 @@ export function BacktestForm({ onJobStarted }: Props) {
   }
 
   const currentStrategy = strategies.find((s) => s.key === strategy);
+  const intervalOptions = MT5_INTERVALS;
 
   return (
     <form className="backtest-form" onSubmit={handleSubmit}>
@@ -76,7 +77,7 @@ export function BacktestForm({ onJobStarted }: Props) {
       <div className="form-row">
         <label>シンボル</label>
         <select value={symbol} onChange={(e) => setSymbol(e.target.value)}>
-          {MT5_SYMBOLS.map((s) => <option key={s} value={s}>{s}</option>)}
+          {symbols.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
       </div>
       <div className="form-row">
@@ -88,7 +89,7 @@ export function BacktestForm({ onJobStarted }: Props) {
       <div className="form-row">
         <label>インターバル</label>
         <select value={interval} onChange={(e) => setInterval(e.target.value)}>
-          {MT5_INTERVALS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          {intervalOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
       </div>
       <div className="form-row">
