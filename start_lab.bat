@@ -12,7 +12,7 @@ echo [OK] %CD%
 py --version >nul 2>&1
 if %errorlevel% neq 0 goto :err_python
 
-if not exist .venv goto :setup
+if not exist .venv\Scripts\uvicorn.exe goto :setup
 goto :start
 
 :setup
