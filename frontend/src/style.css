@@ -185,6 +185,10 @@ body {
 .trades-table-wrap h4 { color: #a0c4ff; margin-bottom: 8px; }
 .trades-scroll { overflow-x: auto; max-height: 400px; overflow-y: auto; }
 .trades-scroll .table { min-width: 800px; }
+.tab-bar { display: flex; gap: 4px; margin-bottom: 8px; }
+.tab-btn { background: #1e2a3a; border: 1px solid #0f3460; color: #a0c4ff; padding: 6px 14px; border-radius: 4px 4px 0 0; cursor: pointer; font-size: 13px; }
+.tab-btn.active { background: #0f3460; color: #fff; border-bottom-color: #0f3460; }
+.tab-btn:hover:not(.active) { background: #253347; }
 .trade-date { font-size: 12px; white-space: nowrap; }
 
 /* Source toggle */
@@ -219,3 +223,34 @@ body {
 }
 .symbol-option { padding: 5px 10px; cursor: pointer; font-size: 13px; color: #e0e0e0; }
 .symbol-option:hover, .symbol-option-active { background: #1a2a4a; color: #a0c4ff; }
+
+/* Tab bar */
+.tab-bar { display: flex; border-bottom: 2px solid #1a2a4a; margin-bottom: 16px; }
+.tab-btn-active { border-bottom: 2px solid #1976d2 !important; color: #fff !important; }
+
+/* Stats panel */
+.stat-panel { display: flex; flex-direction: column; gap: 16px; }
+
+/* DataSource form */
+.ds-form { border: 1px solid #1a2a4a; border-radius: 6px; padding: 12px 16px; margin: 0; }
+.ds-legend { color: #a0c4ff; font-size: 12px; padding: 0 4px; }
+.ds-row { display: flex; align-items: center; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+.ds-radio { display: flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; }
+.ds-mt5 { flex-wrap: wrap; }
+
+/* Correlation multi-source */
+.corr-source-row { display: flex; align-items: flex-start; gap: 8px; }
+.btn-remove { background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; white-space: nowrap; }
+.btn-remove:hover { background: #ef4444; color: #fff; }
+.btn-secondary { background: transparent; border: 1px solid #1976d2; color: #a0c4ff; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+.btn-secondary:hover { background: #0f3460; }
+
+/* Stats table */
+.stat-table { border-collapse: collapse; font-size: 13px; }
+.stat-table th, .stat-table td { padding: 5px 12px; border: 1px solid #1a2a4a; text-align: right; }
+.stat-table th { color: #a0c4ff; font-weight: normal; text-align: left; background: #0d1b2e; }
+
+/* Candle time table */
+.candle-time-table th:first-child { min-width: 70px; }
+.candle-time-table td, .candle-time-table th { text-align: center; min-width: 60px; }
+.candle-time-table th:first-child { text-align: left; }

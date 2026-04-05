@@ -173,6 +173,24 @@ def _simple_backtest(
     return {"plot_json": plot_json, "stats": stats, "trades": trades}
 
 
+def run_simulation(
+    strategy: "Any",
+    df: "Any",
+    init_cash: float = 10000.0,
+    fees: float = 0.0002,
+    tick_df: "Any" = None,
+) -> dict[str, Any]:
+    """ストラテジーのバックテストを実行する。
+
+    strategy が simulate() を持つ場合はそちらを呼び、
+    持たない場合は generate_signals() → _run_backtest() を使う。
+    """
+    if hasattr(strategy, "simulate"):
+        return strategy.simulate(df, init_cash, fees, tick_df=tick_df)
+    signals = strategy.generate_signals(df)
+    return _run_backtest(df, signals, init_cash, fees)
+
+
 async def submit_backtest(
     df: "Any",
     signals: "Any",
@@ -187,6 +205,32 @@ async def submit_backtest(
         try:
             result = await asyncio.to_thread(
                 _run_backtest, df, signals, init_cash, fees
+            )
+            job_store[job_id]["result"] = result
+            job_store[job_id]["status"] = "done"
+        except Exception as e:
+            job_store[job_id]["error"] = str(e)
+            job_store[job_id]["status"] = "error"
+
+    asyncio.create_task(_worker())
+    return job_id
+
+
+async def submit_simulation(
+    strategy: "Any",
+    df: "Any",
+    init_cash: float = 10000.0,
+    fees: float = 0.0002,
+    tick_df: "Any" = None,
+) -> str:
+    """ストラテジーシミュレーションジョブを非同期で開始し、ジョブIDを返す。"""
+    job_id = str(uuid.uuid4())
+    job_store[job_id] = {"status": "running", "result": None, "error": None}
+
+    async def _worker():
+        try:
+            result = await asyncio.to_thread(
+                run_simulation, strategy, df, init_cash, fees, tick_df
             )
             job_store[job_id]["result"] = result
             job_store[job_id]["status"] = "done"

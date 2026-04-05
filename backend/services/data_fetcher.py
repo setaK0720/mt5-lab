@@ -121,6 +121,45 @@ def _fetch_from_mt5(symbol: str, interval: str, period: str):
         raise RuntimeError(f"MT5データ取得エラー: {e}")
 
 
+def fetch_ohlcv_range(symbol: str, interval: str, date_from: str, date_to: str):
+    """日付範囲指定でOHLCVを取得する。parquetが存在しなければMT5からダウンロードして保存する。"""
+    import pandas as pd
+    from datetime import datetime, timedelta
+    from services.mt5_data_store import fetch_and_save_bars, BARS_DIR
+
+    dt_from = datetime.strptime(date_from, "%Y-%m-%d")
+    dt_to   = datetime.strptime(date_to,   "%Y-%m-%d") + timedelta(days=1)
+
+    file_id = f"{symbol}_{interval}_{dt_from:%Y%m%d}_{dt_to:%Y%m%d}"
+    path = BARS_DIR / f"{file_id}.parquet"
+
+    if not path.exists():
+        logger.info("bars not found, fetching from MT5: %s", file_id)
+        fetch_and_save_bars(symbol, interval, date_from, date_to)
+
+    df = pd.read_parquet(path)
+    return df[["open", "high", "low", "close", "volume"]]
+
+
+def fetch_tick_range(symbol: str, date_from: str, date_to: str) -> "pd.DataFrame":
+    """日付範囲指定でティックデータを取得する。parquetが存在しなければMT5からダウンロードして保存する。"""
+    import pandas as pd
+    from datetime import datetime, timedelta
+    from services.mt5_data_store import fetch_and_save_ticks, TICKS_DIR
+
+    dt_from = datetime.strptime(date_from, "%Y-%m-%d")
+    dt_to   = datetime.strptime(date_to,   "%Y-%m-%d") + timedelta(days=1)
+
+    file_id = f"{symbol}_{dt_from:%Y%m%d}_{dt_to:%Y%m%d}"
+    path = TICKS_DIR / f"{file_id}.parquet"
+
+    if not path.exists():
+        logger.info("ticks not found, fetching from MT5: %s", file_id)
+        fetch_and_save_ticks(symbol, date_from, date_to)
+
+    return pd.read_parquet(path)
+
+
 def invalidate_cache(symbol: str, interval: str, source: str = "mt5") -> None:
     cache_path = _cache_path(symbol, interval, source)
     if cache_path.exists():

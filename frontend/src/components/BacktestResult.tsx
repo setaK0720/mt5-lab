@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import Plot from "react-plotly.js";
 import { getBacktestJob } from "../api";
-import type { BacktestJobStatus, BacktestTrade } from "../types";
+import type { BacktestJobStatus, BacktestTrade, PositionLogEntry } from "../types";
 
 interface Props {
   jobId: string | null;
@@ -50,6 +50,9 @@ export function BacktestResult({ jobId }: Props) {
   const plotData = JSON.parse(job.result.plot_json);
   const stats = job.result.stats;
   const trades = job.result.trades ?? [];
+  const positionsLog = job.result.positions_log ?? [];
+  const hasNanpin = trades.some((t) => t.nanpin_count !== undefined);
+  const [activeTab, setActiveTab] = useState<"trades" | "positions">("trades");
 
   return (
     <div className="backtest-result">
@@ -85,39 +88,98 @@ export function BacktestResult({ jobId }: Props) {
         </table>
       </div>
 
-      {/* 注文履歴 */}
-      {trades.length > 0 && (
+      {/* 履歴タブ */}
+      {(trades.length > 0 || positionsLog.length > 0) && (
         <div className="trades-table-wrap">
-          <h4>注文履歴 <span className="badge">{trades.length}</span></h4>
-          <div className="trades-scroll">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>方向</th>
-                  <th>エントリー日時</th>
-                  <th>エントリー価格</th>
-                  <th>決済日時</th>
-                  <th>決済価格</th>
-                  <th>ロット</th>
-                  <th>損益</th>
-                  <th>収益率</th>
-                </tr>
-              </thead>
-              <tbody>
-                {trades.map((t) => (
-                  <TradeRow key={t.id} trade={t} />
-                ))}
-              </tbody>
-            </table>
+          <div className="tab-bar">
+            <button
+              className={`tab-btn${activeTab === "trades" ? " active" : ""}`}
+              onClick={() => setActiveTab("trades")}
+            >
+              注文履歴 <span className="badge">{trades.length}</span>
+            </button>
+            {positionsLog.length > 0 && (
+              <button
+                className={`tab-btn${activeTab === "positions" ? " active" : ""}`}
+                onClick={() => setActiveTab("positions")}
+              >
+                ポジション履歴 <span className="badge">{positionsLog.length}</span>
+              </button>
+            )}
           </div>
+
+          {activeTab === "trades" && (
+            <div className="trades-scroll">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>方向</th>
+                    <th>エントリー日時</th>
+                    <th>エントリー価格</th>
+                    <th>決済日時</th>
+                    <th>決済価格</th>
+                    <th>ロット</th>
+                    <th>損益</th>
+                    <th>投資収益率</th>
+                    {hasNanpin && <th>ナンピン回数</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {trades.map((t) => (
+                    <TradeRow key={t.id} trade={t} hasNanpin={hasNanpin} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {activeTab === "positions" && (
+            <div className="trades-scroll">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>取引#</th>
+                    <th>種別</th>
+                    <th>方向</th>
+                    <th>エントリー日時</th>
+                    <th>エントリー価格</th>
+                    <th>ロット</th>
+                    <th>証拠金</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {positionsLog.map((p) => (
+                    <PositionRow key={p.id} pos={p} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-function TradeRow({ trade }: { trade: BacktestTrade }) {
+function PositionRow({ pos }: { pos: PositionLogEntry }) {
+  const isNanpin = pos.type !== "初回エントリー";
+  return (
+    <tr style={{ opacity: isNanpin ? 0.85 : 1 }}>
+      <td>{pos.id}</td>
+      <td>{pos.trade_id}</td>
+      <td style={{ color: isNanpin ? "#ff9800" : "#26a69a" }}>{pos.type}</td>
+      <td>{pos.direction}</td>
+      <td className="trade-date">{pos.entry_date.slice(0, 16)}</td>
+      <td>{pos.entry_price}</td>
+      <td>{pos.size}</td>
+      <td>{pos.margin.toLocaleString("ja-JP")}円</td>
+    </tr>
+  );
+}
+
+function TradeRow({ trade, hasNanpin }: { trade: BacktestTrade; hasNanpin: boolean }) {
   const isWin = (trade.pnl ?? 0) >= 0;
   return (
     <tr>
@@ -129,11 +191,12 @@ function TradeRow({ trade }: { trade: BacktestTrade }) {
       <td>{trade.exit_price}</td>
       <td>{trade.size}</td>
       <td style={{ color: isWin ? "#26a69a" : "#ef5350", fontWeight: "bold" }}>
-        {trade.pnl !== null ? (isWin ? "+" : "") + trade.pnl : "-"}
+        {trade.pnl !== null ? (isWin ? "+" : "") + trade.pnl.toLocaleString("ja-JP") + "円" : "-"}
       </td>
       <td style={{ color: isWin ? "#26a69a" : "#ef5350" }}>
         {trade.return_pct !== null ? (isWin ? "+" : "") + trade.return_pct + "%" : "-"}
       </td>
+      {hasNanpin && <td>{trade.nanpin_count ?? 0}</td>}
     </tr>
   );
 }

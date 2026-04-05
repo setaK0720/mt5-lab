@@ -2,13 +2,18 @@ import type {
   BacktestJobStatus,
   BarRecord,
   CalendarEvent,
+  CandleTimeResult,
+  CorrelationResult,
   DataFileInfo,
+  DataSource,
   FredSeries,
   FredSeriesInfo,
   NewsArticle,
   OhlcvResponse,
+  ReturnsResult,
   StrategyInfo,
   TickRecord,
+  VolatilityResult,
 } from "./types";
 
 const BASE = "/api";
@@ -40,11 +45,13 @@ export const startBacktest = (body: {
   strategy: string;
   symbol: string;
   interval: string;
-  period: string;
+  period?: string;
   source?: string;
   params: Record<string, number | string>;
   init_cash?: number;
   fees?: number;
+  date_from?: string;  // "YYYY-MM-DD"
+  date_to?: string;    // "YYYY-MM-DD"
 }) => request<{ job_id: string; status: string }>("/analysis/backtest", { method: "POST", body: JSON.stringify(body) });
 
 export const getBacktestJob = (jobId: string) =>
@@ -92,3 +99,16 @@ export const getCalendar = () =>
 
 export const getNews = (q: string, pageSize = 20) =>
   request<{ articles: NewsArticle[]; total?: number; error?: string }>(`/research/news?q=${encodeURIComponent(q)}&page_size=${pageSize}`);
+
+// Stats
+export const fetchReturns = (src: DataSource) =>
+  request<ReturnsResult>("/stats/returns", { method: "POST", body: JSON.stringify(src) });
+
+export const fetchVolatility = (src: DataSource & { atr_period?: number; vol_window?: number }) =>
+  request<VolatilityResult>("/stats/volatility", { method: "POST", body: JSON.stringify(src) });
+
+export const fetchCorrelation = (sources: DataSource[]) =>
+  request<CorrelationResult>("/stats/correlation", { method: "POST", body: JSON.stringify({ sources }) });
+
+export const fetchCandleTime = (src: DataSource & { group_by?: string; utc_offset?: number }) =>
+  request<CandleTimeResult>("/stats/candle_time", { method: "POST", body: JSON.stringify(src) });

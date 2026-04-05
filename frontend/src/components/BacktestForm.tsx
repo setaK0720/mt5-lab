@@ -7,7 +7,6 @@ import type { StrategyInfo } from "../types";
 interface Props {
   onJobStarted: (jobId: string) => void;
 }
-const PERIODS     = ["90d", "1y", "2y", "5y"];
 const MT5_INTERVALS = [
   { value: "15m", label: "15分" },
   { value: "30m", label: "30分" },
@@ -21,11 +20,15 @@ export function BacktestForm({ onJobStarted }: Props) {
   const { symbols } = useSymbols();
   const [strategies, setStrategies] = useState<StrategyInfo[]>([]);
   const [strategy, setStrategy]     = useState("sma_cross");
-  const [symbol, setSymbol]         = useState("EURUSD");
+  const [symbol, setSymbol]         = useState("GOLDmicro");
   const [interval, setInterval]     = useState("1h");
-  const [period, setPeriod]         = useState("1y");
+  const today       = new Date().toISOString().slice(0, 10);
+  const oneYearAgo  = new Date(Date.now() - 365 * 86400 * 1000).toISOString().slice(0, 10);
+  const [dateFrom, setDateFrom]     = useState(oneYearAgo);
+  const [dateTo, setDateTo]         = useState(today);
   const [params, setParams]         = useState<Record<string, number | string>>({});
-  const [initCash, setInitCash]     = useState(10000);
+  const [initCash, setInitCash]     = useState(1_000_000);
+  const [fees, setFees]             = useState(0.0002);
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState<string | null>(null);
 
@@ -53,7 +56,7 @@ export function BacktestForm({ onJobStarted }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const res = await startBacktest({ strategy, symbol, interval, period, source: "mt5", params, init_cash: initCash });
+      const res = await startBacktest({ strategy, symbol, interval, source: "mt5", params, init_cash: initCash, fees, date_from: dateFrom, date_to: dateTo });
       onJobStarted(res.job_id);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "エラーが発生しました");
@@ -80,10 +83,12 @@ export function BacktestForm({ onJobStarted }: Props) {
         <SymbolSelect value={symbol} onChange={setSymbol} symbols={symbols} />
       </div>
       <div className="form-row">
-        <label>期間</label>
-        <select value={period} onChange={(e) => setPeriod(e.target.value)}>
-          {PERIODS.map((p) => <option key={p} value={p}>{p}</option>)}
-        </select>
+        <label>開始日</label>
+        <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+      </div>
+      <div className="form-row">
+        <label>終了日</label>
+        <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
       </div>
       <div className="form-row">
         <label>インターバル</label>
@@ -92,19 +97,37 @@ export function BacktestForm({ onJobStarted }: Props) {
         </select>
       </div>
       <div className="form-row">
-        <label>初期資金</label>
-        <input type="number" value={initCash} min={1000} step={1000}
+        <label>初期資金 (円)</label>
+        <input type="number" value={initCash} min={100_000} step={100_000}
           onChange={(e) => setInitCash(Number(e.target.value))} />
+      </div>
+      <div className="form-row">
+        <label>手数料率</label>
+        <input type="number" value={fees} min={0} max={0.01} step={0.0001}
+          onChange={(e) => setFees(parseFloat(e.target.value))} />
       </div>
 
       {currentStrategy && Object.entries(currentStrategy.params).map(([k, schema]) => (
         <div key={k} className="form-row">
           <label>{schema.label}</label>
-          <input type="number"
-            value={params[k] ?? schema.default}
-            min={schema.min} max={schema.max} step={1}
-            onChange={(e) => setParams((prev) => ({ ...prev, [k]: Number(e.target.value) }))}
-          />
+          {schema.type === "string" && schema.options ? (
+            <select
+              value={String(params[k] ?? schema.default)}
+              onChange={(e) => setParams((prev) => ({ ...prev, [k]: e.target.value }))}
+            >
+              {schema.options.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+            </select>
+          ) : (
+            <input type="number"
+              value={params[k] ?? schema.default}
+              min={schema.min} max={schema.max}
+              step={schema.type === "float" ? (schema.step ?? 0.1) : 1}
+              onChange={(e) => setParams((prev) => ({
+                ...prev,
+                [k]: schema.type === "float" ? parseFloat(e.target.value) : Number(e.target.value),
+              }))}
+            />
+          )}
         </div>
       ))}
 

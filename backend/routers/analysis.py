@@ -49,7 +49,17 @@ def _get_strategies() -> dict[str, type]:
         else:
             logger.warning("SmaCrossStrategy class not found")
     except Exception as e:
-        logger.warning("Strategy load error: %s", e)
+        logger.warning("Strategy load error (sma_cross): %s", e)
+
+    try:
+        cls = _load_strategy_class(_strategies_dir / "nanpin_strategy.py", "NanpinStrategy")
+        if cls:
+            _STRATEGIES["nanpin"] = cls
+            logger.info("Loaded strategy: nanpin")
+        else:
+            logger.warning("NanpinStrategy class not found")
+    except Exception as e:
+        logger.warning("Strategy load error (nanpin): %s", e)
 
     return _STRATEGIES
 
@@ -120,26 +130,32 @@ async def list_strategies():
 
 class BacktestRequest(BaseModel):
     strategy: str = "sma_cross"
-    symbol: str = "EURUSD"
+    symbol: str = "GOLDmicro"
     interval: str = "1h"
     period: str = "1y"
     source: str = "mt5"
     params: dict = {}
     init_cash: float = 10000.0
     fees: float = 0.0002
+    date_from: str | None = None  # YYYY-MM-DD
+    date_to:   str | None = None  # YYYY-MM-DD
 
 
 @router.post("/backtest", status_code=202)
 async def start_backtest(req: BacktestRequest):
     """バックテストジョブを開始し、ジョブIDを返す。"""
-    from services.backtest_engine import submit_backtest
+    from services.backtest_engine import submit_simulation
 
     strategies = _get_strategies()
     if req.strategy not in strategies:
         raise HTTPException(status_code=400, detail=f"Unknown strategy: {req.strategy}")
 
     try:
-        df = _fetch_ohlcv(req.symbol, req.interval, req.period, req.source)
+        if req.date_from and req.date_to:
+            from services.data_fetcher import fetch_ohlcv_range
+            df = fetch_ohlcv_range(req.symbol, req.interval, req.date_from, req.date_to)
+        else:
+            df = _fetch_ohlcv(req.symbol, req.interval, req.period, req.source)
     except RuntimeError as e:
         raise HTTPException(status_code=502, detail=str(e))
     if df.empty:
@@ -147,9 +163,18 @@ async def start_backtest(req: BacktestRequest):
 
     strategy_cls = strategies[req.strategy]
     strategy = strategy_cls(params=req.params)
-    signals = strategy.generate_signals(df)
 
-    job_id = await submit_backtest(df, signals, req.init_cash, req.fees)
+    tick_df = None
+    if req.strategy == "nanpin" and req.params.get("use_tick_lc") == "on":
+        if req.date_from and req.date_to:
+            try:
+                from services.data_fetcher import fetch_tick_range
+                tick_df = fetch_tick_range(req.symbol, req.date_from, req.date_to)
+                logger.info("tick_df loaded: %d rows", len(tick_df))
+            except Exception as e:
+                logger.warning("tick fetch failed, LC disabled: %s", e)
+
+    job_id = await submit_simulation(strategy, df, req.init_cash, req.fees, tick_df=tick_df)
     return {"job_id": job_id, "status": "running"}
 
 

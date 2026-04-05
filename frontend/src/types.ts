@@ -29,6 +29,8 @@ export interface StrategyParam {
   default: number | string;
   min?: number;
   max?: number;
+  step?: number;
+  options?: string[];
   label: string;
 }
 
@@ -48,6 +50,18 @@ export interface BacktestTrade {
   pnl: number | null;
   return_pct: number | null;
   direction: string;
+  nanpin_count?: number;
+}
+
+export interface PositionLogEntry {
+  id: number;
+  trade_id: number;
+  type: string;
+  direction: string;
+  entry_date: string;
+  entry_price: number;
+  size: number;
+  margin: number;
 }
 
 export interface BacktestJobStatus {
@@ -56,6 +70,7 @@ export interface BacktestJobStatus {
     plot_json: string;
     stats: Record<string, number | string | null>;
     trades: BacktestTrade[];
+    positions_log?: PositionLogEntry[];
   };
   error?: string;
 }
@@ -90,6 +105,64 @@ export interface TickRecord {
   last?: number;
   volume?: number;
   [key: string]: unknown;
+}
+
+// ---- Stats ----
+
+export interface ReturnsStats {
+  count: number;
+  mean: number | null;
+  std: number | null;
+  skew: number | null;
+  kurt: number | null;
+  min: number | null;
+  max: number | null;
+  p5: number | null;
+  p25: number | null;
+  p75: number | null;
+  p95: number | null;
+}
+
+export interface ReturnsResult {
+  stats: ReturnsStats;
+  bins: number[];
+  counts: number[];
+}
+
+export interface VolatilityResult {
+  dates: string[];
+  atr: (number | null)[];
+  realized_vol: (number | null)[];
+}
+
+export interface CorrelationResult {
+  symbols: string[];
+  matrix: number[][];
+}
+
+export interface CandleTimeRow {
+  label: string;
+  key: number;
+  bullish: number;
+  bearish: number;
+  neutral: number;
+  total: number;
+  bullish_pct: number | null;
+  bearish_pct: number | null;
+}
+
+export interface CandleTimeResult {
+  group_by: string;
+  utc_offset: number;
+  rows: CandleTimeRow[];
+}
+
+export interface DataSource {
+  source: "file" | "mt5";
+  file_id?: string;
+  symbol?: string;
+  interval?: string;
+  period?: string;
 }
 
 // ---- Research ----
